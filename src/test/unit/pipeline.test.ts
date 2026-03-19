@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createPipelineSchema } from "./pipeline";
+import { createPipelineSchema } from "../../shared/validation/pipeline";
 
 describe("createPipelineSchema", () => {
   it("accepts valid pipeline input", () => {

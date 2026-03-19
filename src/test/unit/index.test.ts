@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runProcessor } from "./processor.js";
+import { runProcessor } from "../../shared/processors/processor.js";
 
 describe("runProcessor", () => {
   it("enrichWithMetadata adds metadata", () => {

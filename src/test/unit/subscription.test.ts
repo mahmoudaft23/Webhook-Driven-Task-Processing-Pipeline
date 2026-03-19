@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSubscriptionSchema } from "./subscription";
+import { createSubscriptionSchema } from "../../shared/validation/subscription";
 
 describe("createSubscriptionSchema", () => {
   it("accepts valid targetUrl", () => {

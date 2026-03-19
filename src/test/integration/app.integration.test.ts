@@ -1,7 +1,7 @@
 import request from "supertest";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { app } from "./app";
-import { cleanupTestDb, setupTestDb } from "../test/testDb";
+import { app } from "../../api/app";
+import { cleanupTestDb, setupTestDb } from "../helper/testDb";
 
 describe("API integration tests TC-01 to TC-16", () => {
   beforeAll(async () => {

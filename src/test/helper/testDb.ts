@@ -1,4 +1,4 @@
-import { pool, testDbConnection } from "../shared/db";
+import { pool, testDbConnection } from "../../shared/db";
 
 export async function setupTestDb() {
   await testDbConnection();
