@@ -5,6 +5,7 @@ import {
 } from "../../shared/validation/common";
 import { getPipelineById } from "../../shared/repositories/pipelineRepository";
 import {
+  deleteJobById,
   getJobById,
   listJobsByPipelineId
 } from "../../shared/repositories/jobRepository";
@@ -65,8 +66,35 @@ import {
     });
   }
 }
+async function deleteJobHandler(req: Request, res: Response) {
+  try {
+    const paramsParsed = uuidParamSchema.safeParse(req.params);
+    if (!paramsParsed.success) {
+      return res.status(400).json({
+        error: "Invalid job id",
+        details: paramsParsed.error.flatten()
+      });
+    }
 
+    const { id } = paramsParsed.data;
+
+    const deleted = await deleteJobById(id);
+    if (!deleted) {
+      return res.status(404).json({
+        error: "Job not found"
+      });
+    }
+
+    return res.status(200).json(deleted);
+  } catch (error) {
+    console.error("Failed to delete job:", error);
+    return res.status(500).json({
+      error: "Internal server error"
+    });
+  }
+}
 export {
     getJobHandler,
-    listJobsByPipelineHandler
+    listJobsByPipelineHandler,
+    deleteJobHandler
 }

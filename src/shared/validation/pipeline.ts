@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const createPipelineSchema = z.object({
+const createPipelineSchema = z.object({
   name: z.string().min(1, "name is required"),
   sourcePath: z
     .string()
@@ -8,10 +8,32 @@ export const createPipelineSchema = z.object({
     .regex(/^\/[a-zA-Z0-9\-_\/]+$/, "sourcePath must start with / and contain valid URL path characters"),
   processorType: z.enum([
     "jsonTransform",
-    "contentProcessor",
-    "enrichWithMetadata"
+    "contentProcessor",//delete this line when you add the new processor type in processor.ts
+    "enrichWithMetadata",//delete this line when you add the new processor type in processor.ts
+    "templateNarrator"
+
+
   ]),
   processorConfig: z.record(z.string(), z.unknown()).default({})
 });
+ const updatePipelineSchema = z
+  .object({
+    name: z.string().min(1, "name cannot be empty").optional(),
+    processorConfig: z.record(z.string(), z.unknown()).optional()
+  })
+  .refine(
+    (data) => data.name !== undefined || data.processorConfig !== undefined,
+    {
+      message: "At least one field must be provided"
+    }
+  );
 
-export type CreatePipelineInput = z.infer<typeof createPipelineSchema>;
+ type UpdatePipelineInput = z.infer<typeof updatePipelineSchema>;
+ type CreatePipelineInput = z.infer<typeof createPipelineSchema>;
+
+export {
+  createPipelineSchema,
+  updatePipelineSchema,
+  UpdatePipelineInput,
+  CreatePipelineInput
+}
