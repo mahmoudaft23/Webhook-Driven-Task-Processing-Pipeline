@@ -7,8 +7,30 @@ on:
   pull_request:
 
 jobs:
-  build-and-typecheck:
+  build-and-test:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: webhook_pipeline
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d webhook_pipeline"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: webhook_pipeline
 
     steps:
       - name: Checkout repository
@@ -23,8 +45,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run migrations
+        run: npm run db:migrate
+
       - name: Run typecheck
         run: npm run typecheck
+
+      - name: Run tests
+        run: npm run test
 
       - name: Build project
         run: npm run build
