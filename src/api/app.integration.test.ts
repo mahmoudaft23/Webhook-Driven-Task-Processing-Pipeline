@@ -123,7 +123,7 @@ describe("API integration tests TC-01 to TC-16", () => {
 
   it("TC-09: returns 404 when pipeline not found for subscription create", async () => {
     const res = await request(app)
-      .post("/api/v1/pipelines/11111111-1111-1111-1111-111111111111/subscriptions")
+      .post("/api/v1/pipelines/550e8400-e29b-41d4-a716-446655440000/subscriptions")
       .send({
         targetUrl: "https://example.com/webhook"
       });
