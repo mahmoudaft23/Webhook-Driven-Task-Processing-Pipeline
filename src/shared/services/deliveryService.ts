@@ -6,12 +6,13 @@ import {
   markJobDeliveryPendingRetry
 } from "../repositories/DeliverableJob";
 import { listSubscriptionsByPipelineId } from "../repositories/subscriptionRepository";
+import { createDeliveryAttempt } from "../repositories/deliveryAttemptRepository";
 
 const RETRY_DELAYS_MS = [
-  60 * 1000,
-  2 * 60 * 1000,
-  3 * 60 * 1000,
-  4 * 60 * 1000
+  60* 1000,
+  80  * 1000,
+  120  * 1000,
+  160  * 1000
 ];
 
 const MAX_DELIVERY_ATTEMPTS = 5;
@@ -39,7 +40,9 @@ export async function deliverNextJob() {
     throw new Error(`Failed to mark job ${nextJob.id} as delivering`);
   }
 
-  const subscriptions = await listSubscriptionsByPipelineId(deliveringJob.pipelineId);
+  const subscriptions = await listSubscriptionsByPipelineId(
+    deliveringJob.pipelineId
+  );
 
   if (subscriptions.length === 0) {
     const updated = await markJobAsDelivered(deliveringJob.id);
@@ -51,24 +54,65 @@ export async function deliverNextJob() {
     return updated;
   }
 
+  const currentAttemptNumber = deliveringJob.deliveryAttemptsCount + 1;
+
   try {
     for (const subscription of subscriptions) {
-      const response = await fetch(subscription.targetUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          jobId: deliveringJob.id,
-          pipelineId: deliveringJob.pipelineId,
-          data: deliveringJob.outputData
-        })
+  try {
+    const response = await fetch(subscription.targetUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        jobId: deliveringJob.id,
+        pipelineId: deliveringJob.pipelineId,
+        data: deliveringJob.outputData
+      })
+    });
+
+    const responseBody = await response.text();
+
+    if (!response.ok) {
+      await createDeliveryAttempt({
+        jobId: deliveringJob.id,
+        subscriptionId: subscription.id,
+        attemptNumber: currentAttemptNumber,
+        httpStatus: response.status,
+        responseBody,
+        failureMessage: `Delivery failed with status ${response.status}`
       });
 
-      if (!response.ok) {
-        throw new Error(`Delivery failed with status ${response.status}`);
-      }
+      throw new Error(`Delivery failed with status ${response.status}`);
     }
+
+    await createDeliveryAttempt({
+      jobId: deliveringJob.id,
+      subscriptionId: subscription.id,
+      attemptNumber: currentAttemptNumber,
+      httpStatus: response.status,
+      responseBody
+    });
+  } catch (error) {
+    const failureMessage =
+      error instanceof Error ? error.message : "Unknown delivery error";
+
+    const isHttpFailure =
+      error instanceof Error &&
+      error.message.startsWith("Delivery failed with status");
+
+    if (!isHttpFailure) {
+      await createDeliveryAttempt({
+        jobId: deliveringJob.id,
+        subscriptionId: subscription.id,
+        attemptNumber: currentAttemptNumber,
+        failureMessage
+      });
+    }
+
+    throw error;
+  }
+}
 
     const updated = await markJobAsDelivered(deliveringJob.id);
 
@@ -80,8 +124,6 @@ export async function deliverNextJob() {
   } catch (error) {
     const failureReason =
       error instanceof Error ? error.message : "Unknown delivery error";
-
-    const currentAttemptNumber = deliveringJob.deliveryAttemptsCount + 1;
 
     if (currentAttemptNumber >= MAX_DELIVERY_ATTEMPTS) {
       const failedJob = await markJobDeliveryFailed(
@@ -120,7 +162,9 @@ export async function deliverNextJob() {
     );
 
     if (!retryJob) {
-      throw new Error(`Failed to schedule retry for job ${deliveringJob.id}`);
+      throw new Error(
+        `Failed to schedule retry for job ${deliveringJob.id}`
+      );
     }
 
     return retryJob;
