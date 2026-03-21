@@ -2,9 +2,29 @@ import {
   getNextDeliverableJob,
   markJobAsDelivered,
   markJobAsDelivering,
-  markJobDeliveryFailed
+  markJobDeliveryFailed,
+  markJobDeliveryPendingRetry
 } from "../repositories/DeliverableJob";
 import { listSubscriptionsByPipelineId } from "../repositories/subscriptionRepository";
+
+const RETRY_DELAYS_MS = [
+  60 * 1000,
+  2 * 60 * 1000,
+  3 * 60 * 1000,
+  4 * 60 * 1000
+];
+
+const MAX_DELIVERY_ATTEMPTS = 5;
+
+function getNextRetryDate(attemptNumber: number): Date | null {
+  const delay = RETRY_DELAYS_MS[attemptNumber - 1];
+
+  if (!delay) {
+    return null;
+  }
+
+  return new Date(Date.now() + delay);
+}
 
 export async function deliverNextJob() {
   const nextJob = await getNextDeliverableJob();
@@ -41,8 +61,6 @@ export async function deliverNextJob() {
         body: JSON.stringify({
           jobId: deliveringJob.id,
           pipelineId: deliveringJob.pipelineId,
-          created_at: deliveringJob.createdAt,
-          input_data: deliveringJob.inputData,
           data: deliveringJob.outputData
         })
       });
@@ -51,7 +69,7 @@ export async function deliverNextJob() {
         throw new Error(`Delivery failed with status ${response.status}`);
       }
     }
-    console.log(`Successfully delivered job ${deliveringJob.id} to all subscriptions`);
+
     const updated = await markJobAsDelivered(deliveringJob.id);
 
     if (!updated) {
@@ -59,23 +77,52 @@ export async function deliverNextJob() {
     }
 
     return updated;
-
-
-
-    
   } catch (error) {
     const failureReason =
       error instanceof Error ? error.message : "Unknown delivery error";
 
-    const updated = await markJobDeliveryFailed(
-      deliveringJob.id,
-      failureReason
-    );
+    const currentAttemptNumber = deliveringJob.deliveryAttemptsCount + 1;
 
-    if (!updated) {
-      throw new Error(`Failed to mark job ${deliveringJob.id} as failed`);
+    if (currentAttemptNumber >= MAX_DELIVERY_ATTEMPTS) {
+      const failedJob = await markJobDeliveryFailed(
+        deliveringJob.id,
+        currentAttemptNumber,
+        failureReason
+      );
+
+      if (!failedJob) {
+        throw new Error(`Failed to mark job ${deliveringJob.id} as failed`);
+      }
+
+      return failedJob;
     }
 
-    return updated;
+    const nextAttemptAt = getNextRetryDate(currentAttemptNumber);
+
+    if (!nextAttemptAt) {
+      const failedJob = await markJobDeliveryFailed(
+        deliveringJob.id,
+        currentAttemptNumber,
+        failureReason
+      );
+
+      if (!failedJob) {
+        throw new Error(`Failed to mark job ${deliveringJob.id} as failed`);
+      }
+
+      return failedJob;
+    }
+
+    const retryJob = await markJobDeliveryPendingRetry(
+      deliveringJob.id,
+      currentAttemptNumber,
+      nextAttemptAt
+    );
+
+    if (!retryJob) {
+      throw new Error(`Failed to schedule retry for job ${deliveringJob.id}`);
+    }
+
+    return retryJob;
   }
 }

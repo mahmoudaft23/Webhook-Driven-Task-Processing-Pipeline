@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-export const createSubscriptionSchema = z.object({
+export const SubscriptionSchema = z.object({
   targetUrl: z.url("targetUrl must be a valid URL")
 });
 
-export type CreateSubscriptionInput = z.infer<typeof createSubscriptionSchema>;
+export type SubscriptionInput = z.infer<typeof  SubscriptionSchema>;

@@ -3,13 +3,15 @@ import {
   uuidParamSchema,
   pipelineIdParamSchema
 } from "../../shared/validation/common";
-import { createSubscriptionSchema } from "../../shared/validation/subscription";
+import { SubscriptionSchema } from "../../shared/validation/subscription";
 import {
   createSubscription,
   listSubscriptionsByPipelineId,
   getSubscriptionById,
-  deleteSubscriptionById
-} from "../../shared/repositories/subscriptionRepository";
+  deleteSubscriptionById,
+  updateSubscriptionById
+} from "../../shared/repositories/subscriptionRepository";  
+
 import { getPipelineById } from "../../shared/repositories/pipelineRepository";
 
  async function createSubscriptionHandler(req: Request, res: Response) {
@@ -31,7 +33,7 @@ import { getPipelineById } from "../../shared/repositories/pipelineRepository";
       });
     }
 
-    const parsed = createSubscriptionSchema.safeParse(req.body);
+    const parsed = SubscriptionSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
         error: "Validation failed",
@@ -111,9 +113,46 @@ import { getPipelineById } from "../../shared/repositories/pipelineRepository";
     });
   }
 }
+async function updateSubscriptionHandler(req: Request, res: Response) {
+  try {
+    const paramsParsed = uuidParamSchema.safeParse(req.params);
+    if (!paramsParsed.success) {
+      return res.status(400).json({
+        error: "Invalid subscription id",
+        details: paramsParsed.error.flatten()
+      });
+    }
 
+    const { id } = paramsParsed.data;
+
+    const existing = await getSubscriptionById(id);
+    if (!existing) {
+      return res.status(404).json({
+        error: "Subscription not found"
+      });
+    }
+
+    const parsed = SubscriptionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: parsed.error.flatten()
+      });
+    }
+
+    const updated = await updateSubscriptionById(id, parsed.data);
+
+    return res.status(200).json(updated);
+  } catch (error) {
+    console.error("Failed to update subscription:", error);
+    return res.status(500).json({
+      error: "Internal server error"
+    });
+  }
+}
 export {
   createSubscriptionHandler,
   listSubscriptionsHandler,
-  deleteSubscriptionHandler
+  deleteSubscriptionHandler,
+  updateSubscriptionHandler
 };

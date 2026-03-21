@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { createSubscriptionSchema } from "../../shared/validation/subscription";
+import { SubscriptionSchema } from "../../shared/validation/subscription";
 
-describe("createSubscriptionSchema", () => {
+describe("SubscriptionSchema", () => {
   it("accepts valid targetUrl", () => {
-    const result = createSubscriptionSchema.safeParse({
+    const result = SubscriptionSchema.safeParse({
       targetUrl: "https://example.com/webhook"
     });
 
@@ -11,7 +11,7 @@ describe("createSubscriptionSchema", () => {
   });
 
   it("rejects invalid targetUrl", () => {
-    const result = createSubscriptionSchema.safeParse({
+    const result = SubscriptionSchema.safeParse({
       targetUrl: "not-a-url"
     });
 

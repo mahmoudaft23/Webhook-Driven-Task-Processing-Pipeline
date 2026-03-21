@@ -1,11 +1,11 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { subscriptions } from "../db/schema";
-import type { CreateSubscriptionInput } from "../validation/subscription";
+import type { SubscriptionInput } from "../validation/subscription";
 
 async function createSubscription(
   pipelineId: string,
-  data: CreateSubscriptionInput
+  data: SubscriptionInput
 ) {
   const [subscription] = await db
     .insert(subscriptions)
@@ -42,10 +42,24 @@ async function deleteSubscriptionById(id: string) {
 
   return deleted ?? null;
 }
+ async function updateSubscriptionById(
+  id: string,
+  data: SubscriptionInput
+) {
+  const [updated] = await db
+    .update(subscriptions)
+    .set({
+      targetUrl: data.targetUrl
+    })
+    .where(eq(subscriptions.id, id))
+    .returning();
 
+  return updated ?? null;
+}
 export {
   createSubscription,
   listSubscriptionsByPipelineId,
   getSubscriptionById,
   deleteSubscriptionById,
+  updateSubscriptionById
 };

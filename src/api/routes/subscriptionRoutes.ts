@@ -2,7 +2,8 @@ import { Router } from "express";
 import {
   createSubscriptionHandler,
   listSubscriptionsHandler,
-  deleteSubscriptionHandler
+  deleteSubscriptionHandler,
+  updateSubscriptionHandler
 } from "../controllers/subscriptionController";
 
 export const subscriptionRoutes = Router();
@@ -20,4 +21,8 @@ subscriptionRoutes.get(
 subscriptionRoutes.delete(
   "/api/v1/subscriptions/:id",
   deleteSubscriptionHandler
+);
+subscriptionRoutes.patch(
+  "/api/v1/subscriptions/:id",
+  updateSubscriptionHandler
 );

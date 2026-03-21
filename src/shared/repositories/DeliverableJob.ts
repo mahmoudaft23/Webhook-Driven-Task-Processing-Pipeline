@@ -2,8 +2,8 @@ import { and, asc, eq } from "drizzle-orm";
 import { db } from "../db";
 import { jobs } from "../db/schema";
 
-export async function getNextDeliverableJob() {
-  const [job] = await db
+ async function getNextDeliverableJob() {
+  const candidates = await db
     .select()
     .from(jobs)
     .where(
@@ -13,12 +13,22 @@ export async function getNextDeliverableJob() {
       )
     )
     .orderBy(asc(jobs.createdAt))
-    .limit(1);
+    .limit(20);
 
-  return job ?? null;
+  const now = new Date();
+
+  const freshJob = candidates.find((job) => !job.nextAttemptAt);
+  if (freshJob) {
+    return freshJob;
+  }
+
+  const retryJob =
+    candidates.find((job) => job.nextAttemptAt && job.nextAttemptAt <= now) ?? null;
+
+  return retryJob;
 }
 
-export async function markJobAsDelivering(id: string) {
+ async function markJobAsDelivering(id: string) {
   const [job] = await db
     .update(jobs)
     .set({
@@ -30,8 +40,27 @@ export async function markJobAsDelivering(id: string) {
 
   return job ?? null;
 }
+async function markJobDeliveryPendingRetry(
+  id: string,
+  deliveryAttemptsCount: number,
+  nextAttemptAt: Date
+) {
+  const [job] = await db
+    .update(jobs)
+    .set({
+      deliveryStatus: "pending",
+      deliveryAttemptsCount,
+      nextAttemptAt,
+      updatedAt: new Date()
+    })
+    .where(eq(jobs.id, id))
+    .returning();
 
-export async function markJobAsDelivered(id: string) {
+  return job ?? null;
+}
+
+
+ async function markJobAsDelivered(id: string) {
   const [job] = await db
     .update(jobs)
     .set({
@@ -44,11 +73,16 @@ export async function markJobAsDelivered(id: string) {
   return job ?? null;
 }
 
-export async function markJobDeliveryFailed(id: string, failureReason: string) {
+ async function markJobDeliveryFailed(
+  id: string,
+  deliveryAttemptsCount: number,
+  failureReason: string
+) {
   const [job] = await db
     .update(jobs)
     .set({
       deliveryStatus: "failed",
+      deliveryAttemptsCount,
       failureReason,
       updatedAt: new Date()
     })
@@ -56,4 +90,12 @@ export async function markJobDeliveryFailed(id: string, failureReason: string) {
     .returning();
 
   return job ?? null;
+}
+
+export{
+getNextDeliverableJob,
+markJobAsDelivering,
+markJobAsDelivered,
+markJobDeliveryFailed,
+markJobDeliveryPendingRetry
 }
