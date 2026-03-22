@@ -1,6 +1,12 @@
 import type { ProcessorInput } from "./type";
-import { ensureObject } from "./processor";
 
+function ensureObject(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Input data must be a JSON object");
+  }
+
+  return value as Record<string, unknown>;
+}
 
 export function templateNarrator({
   inputData,
@@ -11,28 +17,19 @@ export function templateNarrator({
   const outputField =
     typeof config.outputField === "string" ? config.outputField : "summary";
 
-  const fields = Array.isArray(config.fields)
-    ? config.fields.filter((item): item is string => typeof item === "string")
-    : [];
+  const customerName =
+    typeof data.customerName === "string" ? data.customerName : "Unknown customer";
 
-  if (fields.length === 0) {
-    return {
-      ...data,
-      [outputField]: "No summary available."
-    };
-  }
+  const amount =
+    typeof data.amount === "string" || typeof data.amount === "number"
+      ? data.amount
+      : "unknown";
 
-  const parts: string[] = [];
-
-  for (const field of fields) {
-    if (field in data) {
-      parts.push(`${field}: ${String(data[field])}`);
-    }
-  }
+  const status =
+    typeof data.status === "string" ? data.status : "unknown";
 
   return {
     ...data,
-    [outputField]:
-      parts.length > 0 ? parts.join(", ") : "No summary available."
+    [outputField]: `Customer ${customerName} has amount ${amount} with status ${status}.`
   };
 }

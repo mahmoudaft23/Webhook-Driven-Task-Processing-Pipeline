@@ -1,22 +1,27 @@
 import type { ProcessorInput } from "./type";
-import { enrichWithMetadata } from "./enrichWithMetadata";
-import { contentProcessor } from "./contentProcessor";
+
 import { jsonTransform } from "./jsonTransform";
 import { templateNarrator } from "./templateNarrator";
+import { bmiCalculator } from "./bmiCalculator";
+import { healthyWeightRange } from "./healthyWeightRangeCalculator";
+import { stepsCaloriesEstimator } from "./stepsCaloriesEstimator";
+  function runProcessor(processorType: string,params: ProcessorInput): Record<string, unknown> {
 
- function runProcessor(processorType: string,params: ProcessorInput): Record<string, unknown> {
-
-     if (processorType === "enrichWithMetadata") {
-        return enrichWithMetadata(params);
-    }
-    else if (processorType === "templateNarrator") {
+    
+     if (processorType === "templateNarrator") {
         return templateNarrator(params);
-    }
-     else if (processorType === "contentProcessor") {
-        return contentProcessor(params);
     }
      else if (processorType === "jsonTransform") {
         return jsonTransform(params);
+    }
+   else if (processorType === "bmiCalculator") {
+        return bmiCalculator(params);
+    }
+    else if (processorType === "healthyWeightRangeCalculator") {
+        return healthyWeightRange(params);
+    }
+    else if (processorType === "stepsCaloriesEstimator") {
+        return stepsCaloriesEstimator(params);
     }
      else {
         throw new Error(`we don't have a processor of type ${processorType}`);

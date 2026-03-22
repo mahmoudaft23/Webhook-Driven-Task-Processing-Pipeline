@@ -27,7 +27,7 @@ export async function processNextJob() {
       throw new Error(`Pipeline ${processingJob.pipelineId} not found`);
     }
 
-    const outputData = runProcessor(pipeline.processorType, {
+    const outputData =  runProcessor(pipeline.processorType, {
       inputData: processingJob.inputData,
       config: (pipeline.processorConfig ?? {}) as Record<string, unknown>,
       context: {

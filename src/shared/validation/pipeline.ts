@@ -8,9 +8,11 @@ const createPipelineSchema = z.object({
     .regex(/^\/[a-zA-Z0-9\-_\/]+$/, "sourcePath must start with / and contain valid URL path characters"),
   processorType: z.enum([
     "jsonTransform",
-    "contentProcessor",//delete this line when you add the new processor type in processor.ts
-    "enrichWithMetadata",//delete this line when you add the new processor type in processor.ts
-    "templateNarrator"
+    "templateNarrator",
+    "bmiCalculator",
+    "healthyWeightRangeCalculator",
+    "stepsCaloriesEstimator"
+   
 
 
   ]),
