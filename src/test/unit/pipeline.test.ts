@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { createPipelineSchema } from "../../shared/validation/pipeline";
 
-describe("createPipelineSchema", () => {
+describe("pipeline validation", () => {
   it("accepts valid pipeline input", () => {
     const result = createPipelineSchema.safeParse({
-      name: "Test Pipeline",
-      sourcePath: "/webhooks/test-pipeline",
-      processorType: "enrichWithMetadata",
-      processorConfig: {}
+      name: "Narrator Pipeline",
+      sourcePath: "/webhooks/narrator",
+      processorType: "templateNarrator",
+      processorConfig: {
+        outputField: "summary"
+      }
     });
 
     expect(result.success).toBe(true);
@@ -15,10 +17,12 @@ describe("createPipelineSchema", () => {
 
   it("rejects invalid sourcePath", () => {
     const result = createPipelineSchema.safeParse({
-      name: "Bad Pipeline",
+      name: "Bad Path",
       sourcePath: "webhooks/no-slash",
-      processorType: "enrichWithMetadata",
-      processorConfig: {}
+      processorType: "templateNarrator",
+      processorConfig: {
+        outputField: "summary"
+      }
     });
 
     expect(result.success).toBe(false);
@@ -26,8 +30,8 @@ describe("createPipelineSchema", () => {
 
   it("rejects invalid processorType", () => {
     const result = createPipelineSchema.safeParse({
-      name: "Bad Pipeline",
-      sourcePath: "/webhooks/test",
+      name: "Bad Processor",
+      sourcePath: "/webhooks/bad-processor",
       processorType: "wrongType",
       processorConfig: {}
     });

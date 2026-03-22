@@ -1,45 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { runProcessor } from "../../shared/processors/processor.js";
+import { runProcessor } from "../../shared/processors/processor";
 
 describe("runProcessor", () => {
-  it("enrichWithMetadata adds metadata", () => {
-    const result = runProcessor("enrichWithMetadata", {
+  const baseContext = {
+    pipelineId: "pipeline-123",
+    jobId: "job-456"
+  };
+
+  it("templateNarrator creates summary text", () => {
+    const result = runProcessor("templateNarrator", {
       inputData: {
-        name: "Ali",
-        message: "hello"
-      },
-      config: {},
-      context: {
-        pipelineId: "pipeline-1",
-        jobId: "job-1"
-      }
-    }) as Record<string, unknown>;
-
-    expect(result.name).toBe("Ali");
-    expect(result.message).toBe("hello");
-
-    const metadata = result.metadata as Record<string, unknown>;
-    expect(metadata.pipelineId).toBe("pipeline-1");
-    expect(metadata.jobId).toBe("job-1");
-    expect(typeof metadata.processedAt).toBe("string");
-  });
-
-  it("contentProcessor uppercases the selected field", () => {
-    const result = runProcessor("contentProcessor", {
-      inputData: {
-        message: "hello world"
+        customerName: "Ali",
+        amount: 150,
+        status: "paid"
       },
       config: {
-        field: "message",
-        operation: "uppercase"
+        outputField: "summary"
       },
-      context: {
-        pipelineId: "pipeline-1",
-        jobId: "job-1"
-      }
-    }) as Record<string, unknown>;
+      context: baseContext
+    });
 
-    expect(result.message).toBe("HELLO WORLD");
+    expect(result).toEqual({
+      customerName: "Ali",
+      amount: 150,
+      status: "paid",
+      summary: "Customer Ali has amount 150 with status paid."
+    });
   });
 
   it("jsonTransform keeps only selected fields", () => {
@@ -52,11 +38,8 @@ describe("runProcessor", () => {
       config: {
         fields: ["name", "email"]
       },
-      context: {
-        pipelineId: "pipeline-1",
-        jobId: "job-1"
-      }
-    }) as Record<string, unknown>;
+      context: baseContext
+    });
 
     expect(result).toEqual({
       name: "Ali",
@@ -64,21 +47,51 @@ describe("runProcessor", () => {
     });
   });
 
-  it("contentProcessor throws if field is not string", () => {
+  it("bmiCalculator calculates bmi and category", () => {
+    const result = runProcessor("bmiCalculator", {
+      inputData: {
+        weightKg: 70,
+        heightCm: 175
+      },
+      config: {},
+      context: baseContext
+    });
+
+    expect(result).toEqual({
+      weightKg: 70,
+      heightCm: 175,
+      bmi: 22.86,
+      category: "Normal weight"
+    });
+  });
+
+  it("stepsCaloriesEstimator calculates distance and calories", () => {
+    const result = runProcessor("stepsCaloriesEstimator", {
+      inputData: {
+        steps: 5000,
+        weightKg: 70
+      },
+      config: {},
+      context: baseContext
+    });
+
+    expect(result).toEqual({
+      steps: 5000,
+      weightKg: 70,
+      estimatedDistanceKm: 4,
+      estimatedCaloriesBurned: 175
+    });
+  });
+
+  it("throws for unsupported processor type", () => {
     expect(() =>
-      runProcessor("contentProcessor", {
+      runProcessor("unknownProcessor", {
         inputData: {
-          message: 123
+          message: "hello"
         },
-        config: {
-          field: "message",
-          operation: "uppercase"
-        },
-        context: {
-          pipelineId: "pipeline-1",
-          jobId: "job-1"
-        }
+        config: {},
+        context: baseContext
       })
-    ).toThrow();
+    ).toThrow("we don't have a processor of type unknownProcessor");
   });
 });

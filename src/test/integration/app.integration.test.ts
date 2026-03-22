@@ -24,30 +24,37 @@ describe("API integration tests TC-01 to TC-16", () => {
 
   it("TC-02: creates pipeline successfully", async () => {
     const res = await request(app).post("/api/v1/pipelines").send({
-      name: "Metadata Pipeline",
-      sourcePath: "/webhooks/metadata-pipeline",
-      processorType: "enrichWithMetadata",
-      processorConfig: {}
+      name: "Narrator Pipeline",
+      sourcePath: "/webhooks/narrator-pipeline",
+      processorType: "templateNarrator",
+      processorConfig: {
+        outputField: "summary"
+      }
     });
 
     expect(res.status).toBe(201);
     expect(res.body.id).toBeTypeOf("string");
-    expect(res.body.name).toBe("Metadata Pipeline");
+    expect(res.body.name).toBe("Narrator Pipeline");
+    expect(res.body.processorType).toBe("templateNarrator");
   });
 
   it("TC-03: rejects duplicate sourcePath", async () => {
     await request(app).post("/api/v1/pipelines").send({
       name: "One",
       sourcePath: "/webhooks/dup",
-      processorType: "enrichWithMetadata",
-      processorConfig: {}
+      processorType: "templateNarrator",
+      processorConfig: {
+        outputField: "summary"
+      }
     });
 
     const res = await request(app).post("/api/v1/pipelines").send({
       name: "Two",
       sourcePath: "/webhooks/dup",
-      processorType: "enrichWithMetadata",
-      processorConfig: {}
+      processorType: "templateNarrator",
+      processorConfig: {
+        outputField: "summary"
+      }
     });
 
     expect(res.status).toBe(409);
@@ -68,8 +75,10 @@ describe("API integration tests TC-01 to TC-16", () => {
     const res = await request(app).post("/api/v1/pipelines").send({
       name: "Bad Path",
       sourcePath: "webhooks/no-slash",
-      processorType: "enrichWithMetadata",
-      processorConfig: {}
+      processorType: "templateNarrator",
+      processorConfig: {
+        outputField: "summary"
+      }
     });
 
     expect(res.status).toBe(400);
@@ -79,8 +88,10 @@ describe("API integration tests TC-01 to TC-16", () => {
     await request(app).post("/api/v1/pipelines").send({
       name: "List Me",
       sourcePath: "/webhooks/list-me",
-      processorType: "enrichWithMetadata",
-      processorConfig: {}
+      processorType: "templateNarrator",
+      processorConfig: {
+        outputField: "summary"
+      }
     });
 
     const res = await request(app).get("/api/v1/pipelines");
@@ -88,14 +99,17 @@ describe("API integration tests TC-01 to TC-16", () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body).toHaveLength(1);
+    expect(res.body[0].name).toBe("List Me");
   });
 
   it("TC-07: creates subscription successfully", async () => {
     const pipelineRes = await request(app).post("/api/v1/pipelines").send({
       name: "Pipeline",
       sourcePath: "/webhooks/sub-pipeline",
-      processorType: "enrichWithMetadata",
-      processorConfig: {}
+      processorType: "templateNarrator",
+      processorConfig: {
+        outputField: "summary"
+      }
     });
 
     const pipelineId = pipelineRes.body.id;
@@ -109,6 +123,7 @@ describe("API integration tests TC-01 to TC-16", () => {
     expect(res.status).toBe(201);
     expect(res.body.id).toBeTypeOf("string");
     expect(res.body.pipelineId).toBe(pipelineId);
+    expect(res.body.targetUrl).toBe("https://example.com/webhook");
   });
 
   it("TC-08: rejects invalid pipelineId for subscription create", async () => {
@@ -135,8 +150,10 @@ describe("API integration tests TC-01 to TC-16", () => {
     const pipelineRes = await request(app).post("/api/v1/pipelines").send({
       name: "Pipeline",
       sourcePath: "/webhooks/list-subscriptions",
-      processorType: "enrichWithMetadata",
-      processorConfig: {}
+      processorType: "templateNarrator",
+      processorConfig: {
+        outputField: "summary"
+      }
     });
 
     const pipelineId = pipelineRes.body.id;
@@ -154,14 +171,17 @@ describe("API integration tests TC-01 to TC-16", () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body).toHaveLength(1);
+    expect(res.body[0].pipelineId).toBe(pipelineId);
   });
 
   it("TC-11: deletes subscription successfully", async () => {
     const pipelineRes = await request(app).post("/api/v1/pipelines").send({
       name: "Pipeline",
       sourcePath: "/webhooks/delete-subscription",
-      processorType: "enrichWithMetadata",
-      processorConfig: {}
+      processorType: "templateNarrator",
+      processorConfig: {
+        outputField: "summary"
+      }
     });
 
     const pipelineId = pipelineRes.body.id;
@@ -191,7 +211,7 @@ describe("API integration tests TC-01 to TC-16", () => {
   it("TC-13: rejects invalid pipelineId on webhook ingestion", async () => {
     const res = await request(app)
       .post("/webhooks/NOT_UUID")
-      .send({ name: "Ali" });
+      .send({ customerName: "Ali", amount: 100, status: "paid" });
 
     expect(res.status).toBe(400);
   });
@@ -199,7 +219,7 @@ describe("API integration tests TC-01 to TC-16", () => {
   it("TC-14: returns 404 when webhook pipeline not found", async () => {
     const res = await request(app)
       .post("/webhooks/550e8400-e29b-41d4-a716-446655440000")
-      .send({ name: "Ali" });
+      .send({ customerName: "Ali", amount: 100, status: "paid" });
 
     expect(res.status).toBe(404);
   });
@@ -208,8 +228,10 @@ describe("API integration tests TC-01 to TC-16", () => {
     const pipelineRes = await request(app).post("/api/v1/pipelines").send({
       name: "Webhook Pipeline",
       sourcePath: "/webhooks/accept-me",
-      processorType: "enrichWithMetadata",
-      processorConfig: {}
+      processorType: "templateNarrator",
+      processorConfig: {
+        outputField: "summary"
+      }
     });
 
     const pipelineId = pipelineRes.body.id;
@@ -217,8 +239,9 @@ describe("API integration tests TC-01 to TC-16", () => {
     const res = await request(app)
       .post(`/webhooks/${pipelineId}`)
       .send({
-        name: "Ali",
-        message: "hello webhook"
+        customerName: "Ali",
+        amount: 150,
+        status: "paid"
       });
 
     expect(res.status).toBe(202);
@@ -230,8 +253,10 @@ describe("API integration tests TC-01 to TC-16", () => {
     const pipelineRes = await request(app).post("/api/v1/pipelines").send({
       name: "Job Pipeline",
       sourcePath: "/webhooks/job-pipeline",
-      processorType: "enrichWithMetadata",
-      processorConfig: {}
+      processorType: "templateNarrator",
+      processorConfig: {
+        outputField: "summary"
+      }
     });
 
     const pipelineId = pipelineRes.body.id;
@@ -239,8 +264,9 @@ describe("API integration tests TC-01 to TC-16", () => {
     const webhookRes = await request(app)
       .post(`/webhooks/${pipelineId}`)
       .send({
-        name: "Ali",
-        message: "hello job"
+        customerName: "Ali",
+        amount: 200,
+        status: "paid"
       });
 
     const jobId = webhookRes.body.jobId;
