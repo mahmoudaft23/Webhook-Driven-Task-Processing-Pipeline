@@ -17,4 +17,11 @@ describe("SubscriptionSchema", () => {
 
     expect(result.success).toBe(false);
   });
+  it("accepts valid subscription update", () => {
+    const result = SubscriptionSchema.safeParse({
+      targetUrl: "https://example.com/new-webhook"
+    });
+
+    expect(result.success).toBe(true);
+  });
 });
