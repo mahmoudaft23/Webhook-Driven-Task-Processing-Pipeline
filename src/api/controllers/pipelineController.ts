@@ -8,7 +8,7 @@ import {
   deletePipelineById,
   updatePipelineById
 } from "../../shared/repositories/pipelineRepository";
-import { uuidParamSchema } from "../../shared/validation/common";
+import { uuidParamSchema,sourcePathQuerySchema } from "../../shared/validation/common";
 
  async function createPipelineHandler(req: Request, res: Response) {
   try {
@@ -163,11 +163,40 @@ async function deletePipelineByIdHandler(req: Request, res: Response) {
     });
   }
 }
+async function getPipelineBySourcePathHandler(req: Request, res: Response) {
+  try {
+    const queryParsed = sourcePathQuerySchema.safeParse(req.query);
 
+    if (!queryParsed.success) {
+      return res.status(400).json({
+        error: "Invalid sourcePath",
+        details: queryParsed.error.flatten()
+      });
+    }
+
+    const { sourcePath } = queryParsed.data;
+
+    const pipeline = await getPipelineBySourcePath(sourcePath);
+
+    if (!pipeline) {
+      return res.status(404).json({
+        error: "Pipeline not found"
+      });
+    }
+
+    return res.status(200).json(pipeline);
+  } catch (error) {
+    console.error("Failed to get pipeline by source path:", error);
+    return res.status(500).json({
+      error: "Internal server error"
+    });
+  }
+}
 export {
   createPipelineHandler,
   listPipelinesHandler,
   getPipelineByIdHandler,
   updatePipelineByIdHandler,
+  getPipelineBySourcePathHandler,
   deletePipelineByIdHandler
 };
