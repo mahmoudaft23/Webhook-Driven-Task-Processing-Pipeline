@@ -155,7 +155,7 @@ The system currently supports the following processors:
 
 Detailed documentation, design decisions, API examples, and deeper explanations are available in Notion:
 
-> Notion Link: `https://www.notion.so/Webhook-Driven-Task-Processing-Pipeline-32598394c5588060bb48eb1b0ba8b723?source=copy_link`
+> Notion Link: [Webhook-Driven Task Processing Pipeline](https://www.notion.so/Webhook-Driven-Task-Processing-Pipeline-32598394c5588060bb48eb1b0ba8b723?source=copy_link)
 
 
 ## 🔍 Why This Project?
