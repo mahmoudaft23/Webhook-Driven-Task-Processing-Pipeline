@@ -10,8 +10,6 @@ This project lets users create **processing pipelines** that receive incoming we
 ---
 ## 📚 Documentation
 
-Detailed documentation, design decisions, API examples, and deeper explanations are available in Notion:
-
 > Notion Link: [Webhook-Driven Task Processing Pipeline](https://www.notion.so/Webhook-Driven-Task-Processing-Pipeline-32598394c5588060bb48eb1b0ba8b723?source=copy_link)
 ---
 ## ✨ Features
