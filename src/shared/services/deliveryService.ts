@@ -9,10 +9,10 @@ import { listSubscriptionsByPipelineId } from "../repositories/subscriptionRepos
 import { createDeliveryAttempt } from "../repositories/deliveryAttemptRepository";
 
 const RETRY_DELAYS_MS = [
-  60* 1000,
-  80  * 1000,
-  120  * 1000,
-  160  * 1000
+  5 * 60 * 1000,   
+  15 * 60 * 1000, 
+  30 * 60 * 1000,  
+  60 * 60 * 1000   
 ];
 
 const MAX_DELIVERY_ATTEMPTS = 5;

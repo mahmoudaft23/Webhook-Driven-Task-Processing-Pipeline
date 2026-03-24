@@ -9,3 +9,10 @@ healthRoutes.get("/health", (_req, res) => {
     status: "ok"
   });
 });
+healthRoutes.post("/test-receiver", async (req, res) => {
+  console.log("Test receiver got payload:", req.body);
+
+  return res.status(200).json({
+    received: true
+  });
+});
